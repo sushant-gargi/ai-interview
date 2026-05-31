@@ -26,6 +26,10 @@ public class InterviewSession {
     @JoinColumn(name = "user_id", nullable = false)
     User user;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "resume_id", nullable = false)
+    Resume resume;
+
     String jobRole;
 
     @Column(columnDefinition = "TEXT")
