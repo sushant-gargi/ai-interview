@@ -1,8 +1,6 @@
 package com.aiinterview.ai_interview.dto.report;
 
 public record ReportRequest(
-        String summary,
-        Integer totalScore,
-        Integer maxScore
+        String summaryOverride  // optional — if null AI will generate later
 ) {
 }
