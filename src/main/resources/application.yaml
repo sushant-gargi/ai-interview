@@ -14,7 +14,7 @@ spring:
         format_sql: true
   ai:
     openai:
-      api-key: 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
+      api-key: sk***********************
       base-url: https://openrouter.ai/api
       chat:
         options:
