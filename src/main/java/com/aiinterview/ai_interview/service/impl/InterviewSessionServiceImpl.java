@@ -13,6 +13,7 @@ import com.aiinterview.ai_interview.repository.ResumeRepository;
 import com.aiinterview.ai_interview.repository.UserRepository;
 import com.aiinterview.ai_interview.security.AuthUtil;
 import com.aiinterview.ai_interview.service.InterviewSessionService;
+import com.aiinterview.ai_interview.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     final ResumeRepository resumeRepository;
     final UserRepository userRepository;
     final AuthUtil authUtil;
+    final ChatService chatService;
 
     @Override
     public SessionResponse createSession(SessionRequest request) {
@@ -98,7 +100,16 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
         session.setStatus(SessionStatus.IN_PROGRESS);
         session.setActualStart(now);
 
-        return toResponse(sessionRepository.save(session));
+        InterviewSession saved = sessionRepository.save(session);
+
+        // Initialize chat context for the session (system message + assistant greeting)
+        try {
+            chatService.initializeSession(saved.getId());
+        } catch (Exception e) {
+            log.error("Failed to initialize chat for session {}", saved.getId(), e);
+        }
+
+        return toResponse(saved);
     }
 
     @Override

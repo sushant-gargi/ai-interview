@@ -13,6 +13,7 @@ import com.aiinterview.ai_interview.repository.InterviewSessionRepository;
 import com.aiinterview.ai_interview.repository.ReportRepository;
 import com.aiinterview.ai_interview.security.AuthUtil;
 import com.aiinterview.ai_interview.service.ReportService;
+import com.aiinterview.ai_interview.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,7 @@ public class ReportServiceImpl implements ReportService {
     final InterviewSessionRepository sessionRepository;
     final InterviewQuestionRepository questionRepository;
     final AuthUtil authUtil;
+    final ChatService chatService;
 
     @Override
     public ReportResponse saveReport(Long sessionId, ReportRequest request) {
@@ -64,9 +66,18 @@ public class ReportServiceImpl implements ReportService {
         session.setActualEnd(Instant.now());
         sessionRepository.save(session);
 
-        String summary = (request.summaryOverride() != null && !request.summaryOverride().isBlank())
-                ? request.summaryOverride()
-                : "Interview completed. AI summary will be generated in the next phase.";
+        String summary;
+        if (request.summaryOverride() != null && !request.summaryOverride().isBlank()) {
+            summary = request.summaryOverride();
+        } else {
+            // Attempt to generate AI summary from transcript; fall back to generic placeholder
+            try {
+                summary = chatService.generateSummaryFromTranscript(sessionId);
+            } catch (Exception e) {
+                log.error("Failed to generate AI summary for session {}", sessionId, e);
+                summary = "Interview completed. AI summary will be generated in the next phase.";
+            }
+        }
 
         Report report = Report.builder()
                 .session(session)
