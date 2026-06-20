@@ -18,7 +18,7 @@ spring:
         format_sql: false
   ai:
     openai:
-      api-key: 
+      api-key: sk***********************
       base-url: https://openrouter.ai/api
       chat:
         options:
