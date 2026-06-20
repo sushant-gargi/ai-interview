@@ -18,12 +18,23 @@ spring:
         format_sql: false
   ai:
     openai:
-      api-key: sk***********************
+      api-key: 
       base-url: https://openrouter.ai/api
       chat:
         options:
           model: openrouter/owl-alpha
           temperature: 0.7
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: b12ec225366f86
+    password: a87893460398ae
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -38,4 +49,7 @@ app:
     url: http://localhost:8801/v1/audio/speech
     model: tts-1
     voice: alloy
+    enabled: true
+  mail:
+    from: noreply@aiinterview.com
     enabled: true

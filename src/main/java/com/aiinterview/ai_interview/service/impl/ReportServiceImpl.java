@@ -12,6 +12,7 @@ import com.aiinterview.ai_interview.repository.InterviewSessionRepository;
 import com.aiinterview.ai_interview.repository.ReportRepository;
 import com.aiinterview.ai_interview.repository.UserRepository;
 import com.aiinterview.ai_interview.security.AuthUtil;
+import com.aiinterview.ai_interview.service.EmailService;
 import com.aiinterview.ai_interview.service.ReportService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,7 @@ public class ReportServiceImpl implements ReportService {
     final UserRepository userRepository;
     final AuthUtil authUtil;
     final ChatClient chatClient;
+    final EmailService emailService;
 
     @Override
     public ReportResponse getReport(Long sessionId) {
@@ -78,6 +80,20 @@ public class ReportServiceImpl implements ReportService {
 
         Report saved = reportRepository.save(report);
         log.info("Completed-session report generated for session {} (Report ID: {})", sessionId, saved.getId());
+
+        // Notify recruiter that report is ready
+        try {
+            emailService.sendReportReady(
+                    session.getRecruiter().getEmail(),
+                    session.getCandidateEmail(),
+                    session.getJobRole(),
+                    aiResult.overallScore(),
+                    aiResult.recommendation().name(),
+                    sessionId
+            );
+        } catch (Exception e) {
+            log.error("Failed to send report-ready email for session {}", sessionId, e);
+        }
     }
 
     @Override
@@ -107,6 +123,20 @@ public class ReportServiceImpl implements ReportService {
 
         Report saved = reportRepository.save(noShowReport);
         log.info("No-show report generated for session {} (Report ID: {})", sessionId, saved.getId());
+
+        // Notify recruiter that a no-show report is ready
+        try {
+            emailService.sendReportReady(
+                    session.getRecruiter().getEmail(),
+                    session.getCandidateEmail(),
+                    session.getJobRole(),
+                    0,
+                    "NO",
+                    sessionId
+            );
+        } catch (Exception e) {
+            log.error("Failed to send no-show report email for session {}", sessionId, e);
+        }
     }
 
     @Override
@@ -133,6 +163,20 @@ public class ReportServiceImpl implements ReportService {
 
         Report saved = reportRepository.save(report);
         log.info("Abandoned session report generated for session {} (Report ID: {})", sessionId, saved.getId());
+
+        // Notify recruiter that an abandoned-session report is ready
+        try {
+            emailService.sendReportReady(
+                    session.getRecruiter().getEmail(),
+                    session.getCandidateEmail(),
+                    session.getJobRole(),
+                    aiResult.overallScore(),
+                    aiResult.recommendation().name(),
+                    sessionId
+            );
+        } catch (Exception e) {
+            log.error("Failed to send abandoned report email for session {}", sessionId, e);
+        }
     }
 
     // ── Private helpers ────────────────────────────────────────────────────────
@@ -197,7 +241,7 @@ public class ReportServiceImpl implements ReportService {
                     .user(summaryPrompt)
                     .call()
                     .content();
-            
+
             if (resultStr == null || resultStr.isBlank()) {
                 return new AiReportResult(
                         0, HiringRecommendation.NO, "Summary generation returned an empty response.", Map.of(), List.of());

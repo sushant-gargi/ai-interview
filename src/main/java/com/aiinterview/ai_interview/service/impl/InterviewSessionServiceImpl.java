@@ -16,6 +16,7 @@ import com.aiinterview.ai_interview.repository.ResumeRepository;
 import com.aiinterview.ai_interview.repository.UserRepository;
 import com.aiinterview.ai_interview.security.AuthUtil;
 import com.aiinterview.ai_interview.service.ChatService;
+import com.aiinterview.ai_interview.service.EmailService;
 import com.aiinterview.ai_interview.service.InterviewSessionService;
 import com.aiinterview.ai_interview.service.ReportService;
 import lombok.RequiredArgsConstructor;
@@ -39,6 +40,7 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
     final ChatService chatService;
     final ReportService reportService;
     final ReportRepository reportRepository;
+    final EmailService emailService;
 
     @Override
     public SessionResponse createSession(SessionRequest request) {
@@ -82,7 +84,23 @@ public class InterviewSessionServiceImpl implements InterviewSessionService {
                 .status(SessionStatus.SCHEDULED)
                 .build();
 
-        return toResponse(sessionRepository.save(session));
+        SessionResponse response = toResponse(sessionRepository.save(session));
+
+        // Send interview invite email to candidate — failure must never block session creation
+        try {
+            emailService.sendInterviewInvite(
+                    session.getCandidateEmail(),
+                    user.getName(),
+                    session.getJobRole(),
+                    session.getScheduledStart(),
+                    session.getScheduledEnd(),
+                    response.id()
+            );
+        } catch (Exception e) {
+            log.error("Failed to send interview invite email for session {}", response.id(), e);
+        }
+
+        return response;
     }
 
     @Override

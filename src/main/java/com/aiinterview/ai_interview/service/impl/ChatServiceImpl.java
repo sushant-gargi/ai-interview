@@ -78,6 +78,13 @@ public class ChatServiceImpl implements ChatService {
                    challenge them ("Why did you choose that?", "What are the edge cases?").
                 4. Keep a professional, objective tone throughout.
                 5. After the greeting, always start by asking the candidate to introduce themselves.
+                6. CRITICAL — VOICE INTERVIEW FORMAT: Every single response you give MUST be short and concise.
+                   A maximum of 2–3 sentences total. The candidate is responding by voice, so long
+                   multi-part questions are impossible to answer in a single spoken answer.
+                   NEVER use bullet lists, numbered lists, or markdown in your responses.
+                   ONE thought, ONE question, end of response.
+                7. Do NOT summarize the candidate's answer back to them before asking the next question.
+                   Go directly to your follow-up or next question.
                 """.formatted(
                 session.getJobRole(),
                 truncate(jobDesc, 3000),
@@ -196,7 +203,7 @@ public class ChatServiceImpl implements ChatService {
     @Transactional(readOnly = true)
     public ChatHistoryResponse getChatHistory(Long sessionId) {
         Long userId = authUtil.getCurrentUserId();
-        getSessionAndValidateOwner(sessionId, userId);
+        InterviewSession session = getSessionAndValidateOwner(sessionId, userId);
 
         List<ChatMessageDto> messages = messageRepository
                 .findBySessionIdOrderByCreatedAtAsc(sessionId)
@@ -206,7 +213,7 @@ public class ChatServiceImpl implements ChatService {
                 .toList();
 
         log.info("Retrieved {} messages for session {}", messages.size(), sessionId);
-        return new ChatHistoryResponse(sessionId, messages);
+        return new ChatHistoryResponse(sessionId, session.getStatus().name(), messages);
     }
 
     @Override

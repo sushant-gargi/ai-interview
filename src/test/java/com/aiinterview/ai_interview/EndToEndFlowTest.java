@@ -74,6 +74,30 @@ public class EndToEndFlowTest {
     @MockitoBean
     private TtsService ttsService;
 
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
+    @MockitoBean
+    private com.aiinterview.ai_interview.service.EmailService emailService;
+
     @BeforeEach
     void setUp() {
         mockMvc = MockMvcBuilders.webAppContextSetup(context)

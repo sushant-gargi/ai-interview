@@ -193,7 +193,7 @@ public class ChatControllerTest {
     void getChatHistory_validSession_returnsOk() throws Exception {
         String token = getValidToken();
         Instant now = Instant.now();
-        ChatHistoryResponse response = new ChatHistoryResponse(1L, List.of(
+        ChatHistoryResponse response = new ChatHistoryResponse(1L, "IN_PROGRESS", List.of(
                 new ChatMessageDto("USER", "hello", now)
         ));
 
@@ -211,7 +211,7 @@ public class ChatControllerTest {
     void getChatHistory_systemMessagesFiltered_returnsOk() throws Exception {
         String token = getValidToken();
         Instant now = Instant.now();
-        ChatHistoryResponse response = new ChatHistoryResponse(1L, List.of(
+        ChatHistoryResponse response = new ChatHistoryResponse(1L, "IN_PROGRESS", List.of(
                 new ChatMessageDto("USER", "hello", now),
                 new ChatMessageDto("ASSISTANT", "hi", now)
         ));
