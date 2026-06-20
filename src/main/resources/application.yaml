@@ -1,3 +1,6 @@
+server:
+  port: 8181
+
 spring:
   application:
     name: ai-interview
@@ -6,15 +9,16 @@ spring:
     username: postgres
     password: admin123
   jpa:
+    open-in-view: false
     hibernate:
       ddl-auto: update
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
   ai:
     openai:
-      api-key: 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
+      api-key: 
       base-url: https://openrouter.ai/api
       chat:
         options:
@@ -30,3 +34,8 @@ app:
     expiration-ms: 86400000
   file:
     upload-dir: ./uploads
+  tts:
+    url: http://localhost:8801/v1/audio/speech
+    model: tts-1
+    voice: alloy
+    enabled: true

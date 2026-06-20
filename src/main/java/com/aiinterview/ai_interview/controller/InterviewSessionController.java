@@ -1,12 +1,15 @@
 package com.aiinterview.ai_interview.controller;
 
+import com.aiinterview.ai_interview.dto.resume.ResumeResponse;
 import com.aiinterview.ai_interview.dto.session.SessionRequest;
 import com.aiinterview.ai_interview.dto.session.SessionResponse;
 import com.aiinterview.ai_interview.service.InterviewSessionService;
+import com.aiinterview.ai_interview.service.ResumeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,11 +19,15 @@ import java.util.List;
 public class InterviewSessionController {
 
     final InterviewSessionService sessionService;
+    final ResumeService resumeService;
 
-    @PostMapping
-    public ResponseEntity<SessionResponse> createSession(
-            @Valid @RequestBody SessionRequest request) {
-        return ResponseEntity.ok(sessionService.createSession(request));
+    // Candidate endpoints
+
+    @PostMapping("/{id}/resume")
+    public ResponseEntity<ResumeResponse> uploadResume(
+            @PathVariable Long id,
+            @RequestParam("file") MultipartFile file) {
+        return ResponseEntity.ok(resumeService.uploadResumeForSession(id, file));
     }
 
     @PostMapping("/{id}/start")
@@ -31,5 +38,11 @@ public class InterviewSessionController {
     @GetMapping
     public ResponseEntity<List<SessionResponse>> getMySessions() {
         return ResponseEntity.ok(sessionService.getMySessions());
+    }
+
+    @PostMapping("/{id}/heartbeat")
+    public ResponseEntity<Void> recordHeartbeat(@PathVariable Long id) {
+        sessionService.recordHeartbeat(id);
+        return ResponseEntity.ok().build();
     }
 }

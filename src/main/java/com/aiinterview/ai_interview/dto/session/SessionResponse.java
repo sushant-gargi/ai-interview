@@ -13,6 +13,7 @@ public record SessionResponse(
         Instant scheduledEnd,
         Instant actualStart,
         Instant actualEnd,
-        Instant createdAt
+        Instant createdAt,
+        boolean resumeUploaded
 ) {
 }

@@ -9,4 +9,7 @@ public interface InterviewSessionService {
     SessionResponse createSession(SessionRequest request);
     SessionResponse startSession(Long sessionId);
     List<SessionResponse> getMySessions();
+    List<SessionResponse> getRecruiterSessions();
+    void recordHeartbeat(Long sessionId);
+    void deleteSession(Long sessionId);
 }

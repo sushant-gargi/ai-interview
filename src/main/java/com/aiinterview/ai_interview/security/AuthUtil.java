@@ -32,6 +32,7 @@ public class AuthUtil {
         return Jwts.builder()
                 .subject(user.getEmail())
                 .claim("userId", user.getId().toString())
+                .claim("role", user.getRole() != null ? user.getRole().name() : "CANDIDATE")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + expirationMs))
                 .signWith(getSecretKey())
@@ -47,7 +48,15 @@ public class AuthUtil {
 
         Long userId = Long.parseLong(claims.get("userId", String.class));
         String email = claims.getSubject();
-        return new JwtUserPrincipal(userId, email, new ArrayList<>());
+        String roleStr = claims.get("role", String.class);
+        if (roleStr == null) {
+            roleStr = "CANDIDATE";
+        }
+        
+        java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new ArrayList<>();
+        authorities.add(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + roleStr));
+
+        return new JwtUserPrincipal(userId, email, authorities);
     }
 
     public Long getCurrentUserId() {
@@ -60,13 +69,4 @@ public class AuthUtil {
         return userPrincipal.userId();
     }
 
-    public String getCurrentUserEmail() {
-        Authentication authentication = SecurityContextHolder
-                .getContext().getAuthentication();
-        if (authentication == null ||
-                !(authentication.getPrincipal() instanceof JwtUserPrincipal userPrincipal)) {
-            throw new AuthenticationCredentialsNotFoundException("No JWT found");
-        }
-        return userPrincipal.email();
-    }
 }

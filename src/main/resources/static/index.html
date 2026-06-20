@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Interviewer Simulator & TTS Tester</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0e15;
+            --card-bg: rgba(20, 22, 37, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --primary: #8b5cf6;
+            --primary-hover: #7c3aed;
+            --primary-glow: rgba(139, 92, 246, 0.4);
+            --accent: #06b6d4;
+            --accent-glow: rgba(6, 182, 212, 0.3);
+            --success: #10b981;
+            --error: #ef4444;
+            --chat-user: #1e1b4b;
+            --chat-ai: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.15) 0px, transparent 50%);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        header {
+            padding: 20px 40px;
+            background: rgba(13, 14, 21, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            box-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #fff 40%, var(--text-muted));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--text-muted);
+            box-shadow: 0 0 8px var(--text-muted);
+        }
+
+        .status-dot.active {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-dot.error {
+            background-color: var(--error);
+            box-shadow: 0 0 8px var(--error);
+        }
+
+        main {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 350px 1fr 400px;
+            gap: 24px;
+            padding: 24px 40px;
+            max-width: 1800px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        @media (max-width: 1200px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            backdrop-filter: blur(16px);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: border-color 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .panel-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 12px;
+            color: white;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="number"], textarea, select {
+            width: 100%;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: white;
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus, select:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.2);
+        }
+
+        .btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, var(--primary), #7c3aed);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+            filter: brightness(1.1);
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, var(--accent), #0891b2);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+        }
+
+        .btn-accent:hover {
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: none;
+        }
+
+        /* Chat Panel Styles */
+        .chat-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            border: 1px solid var(--card-border);
+            overflow: hidden;
+        }
+
+        .chat-history {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            scroll-behavior: smooth;
+        }
+
+        .message {
+            max-width: 80%;
+            padding: 12px 18px;
+            border-radius: 12px;
+            line-height: 1.5;
+            font-size: 0.95rem;
+            position: relative;
+            animation: fadeIn 0.3s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.system {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            align-self: center;
+            font-size: 0.85rem;
+            text-align: center;
+            border-radius: 8px;
+            max-width: 90%;
+        }
+
+        .message.ai {
+            background-color: var(--chat-ai);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message.user {
+            background-color: var(--chat-user);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-time {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-align: right;
+        }
+
+        .chat-input-bar {
+            padding: 16px;
+            background: rgba(13, 14, 21, 0.6);
+            border-top: 1px solid var(--card-border);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        /* Audio Player Bar */
+        .audio-playback-bar {
+            padding: 16px;
+            background: rgba(139, 92, 246, 0.08);
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .audio-player-title {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 8px;
+            outline: none;
+        }
+
+        /* Log / Console Panel */
+        .log-console {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            border: 1px solid var(--card-border);
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            height: 150px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            padding-bottom: 4px;
+        }
+
+        .log-entry.error {
+            color: var(--error);
+        }
+
+        .log-entry.success {
+            color: var(--success);
+        }
+
+        .log-entry.info {
+            color: var(--text-muted);
+        }
+
+        /* Audio Wave Visualizer Simulation */
+        .wave-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 30px;
+            margin: 10px 0;
+        }
+
+        .wave-bar {
+            width: 3px;
+            height: 5px;
+            background-color: var(--primary);
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }
+
+        .wave-container.playing .wave-bar {
+            animation: bounce 1.2s ease-in-out infinite alternate;
+        }
+
+        .wave-container.playing .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-container.playing .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-container.playing .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-container.playing .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        .wave-container.playing .wave-bar:nth-child(6) { animation-delay: 0.5s; }
+        .wave-container.playing .wave-bar:nth-child(7) { animation-delay: 0.6s; }
+        .wave-container.playing .wave-bar:nth-child(8) { animation-delay: 0.7s; }
+
+        @keyframes bounce {
+            10% { height: 5px; }
+            50% { height: 28px; background-color: var(--accent); }
+            100% { height: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">AI</div>
+            <h1>AI Interviewer Simulator & TTS System Tester</h1>
+        </div>
+        <div class="status-badge">
+            <div id="statusDot" class="status-dot"></div>
+            <span id="statusText">Ready</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Config Panel -->
+        <section class="panel">
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Connection Config
+            </h2>
+            <div class="form-group">
+                <label for="jwtToken">JWT Authorization Token</label>
+                <input type="text" id="jwtToken" placeholder="Paste your Bearer token here (without 'Bearer ')" />
+            </div>
+            <div class="form-group">
+                <label for="sessionId">Active Interview Session ID</label>
+                <input type="number" id="sessionId" value="2" min="1" />
+            </div>
+            <div class="form-group">
+                <label for="backendUrl">Backend Server Base URL</label>
+                <input type="text" id="backendUrl" value="http://localhost:8181" />
+            </div>
+            <button id="saveConfigBtn" class="btn btn-secondary">Save Configuration</button>
+            
+            <h2 class="panel-title" style="margin-top: 15px;">Console Output</h2>
+            <div id="consoleLog" class="log-console">
+                <div class="log-entry info">System initialized. Ready to test.</div>
+            </div>
+            <button id="clearLogsBtn" class="btn btn-secondary" style="padding: 8px 12px; font-size: 0.8rem;">Clear Console Logs</button>
+        </section>
+
+        <!-- Chat Panel -->
+        <section class="panel">
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                Active Chat Dialogue
+            </h2>
+            <div class="chat-container">
+                <div id="chatHistory" class="chat-history">
+                    <div class="message system">
+                        Connect your session and type a message to begin the interview.
+                    </div>
+                </div>
+                
+                <div id="waveContainer" class="wave-container">
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                    <div class="wave-bar"></div>
+                </div>
+
+                <div class="audio-playback-bar">
+                    <div class="audio-player-title">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        Interviewer Audio Output Player
+                    </div>
+                    <audio id="audioPlayer" controls></audio>
+                </div>
+                
+                <div class="chat-input-bar">
+                    <input type="text" id="chatInput" placeholder="Type your interview response here..." />
+                    <button id="sendChatBtn" class="btn">
+                        <span>Send</span>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Base64 Manual Tool Panel -->
+        <section class="panel">
+            <h2 class="panel-title">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Base64 Manual Playback Tool
+            </h2>
+            <div class="form-group">
+                <label for="mimeType">Audio MIME Type</label>
+                <select id="mimeType">
+                    <option value="audio/mpeg">audio/mpeg (Standard MP3 - Recommended)</option>
+                    <option value="audio/mp3">audio/mp3</option>
+                    <option value="audio/wav">audio/wav</option>
+                    <option value="audio/ogg">audio/ogg</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="base64Input">Paste Raw Base64 String</label>
+                <textarea id="base64Input" rows="12" placeholder="Paste base64 encoded audio bytes here. Newlines and spaces are automatically cleaned up..."></textarea>
+            </div>
+            <button id="playBase64Btn" class="btn btn-accent">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                Decode & Play Audio
+            </button>
+            <button id="stopAudioBtn" class="btn btn-secondary">Stop Playback</button>
+        </section>
+    </main>
+
+    <script>
+        // DOM Elements
+        const jwtTokenInput = document.getElementById('jwtToken');
+        const sessionIdInput = document.getElementById('sessionId');
+        const backendUrlInput = document.getElementById('backendUrl');
+        const saveConfigBtn = document.getElementById('saveConfigBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const consoleLog = document.getElementById('consoleLog');
+        const clearLogsBtn = document.getElementById('clearLogsBtn');
+
+        const chatHistory = document.getElementById('chatHistory');
+        const chatInput = document.getElementById('chatInput');
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const waveContainer = document.getElementById('waveContainer');
+
+        const mimeTypeSelect = document.getElementById('mimeType');
+        const base64Input = document.getElementById('base64Input');
+        const playBase64Btn = document.getElementById('playBase64Btn');
+        const stopAudioBtn = document.getElementById('stopAudioBtn');
+
+        // Initialize from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('jwtToken')) {
+                jwtTokenInput.value = localStorage.getItem('jwtToken');
+            }
+            if (localStorage.getItem('sessionId')) {
+                sessionIdInput.value = localStorage.getItem('sessionId');
+            }
+            if (localStorage.getItem('backendUrl')) {
+                backendUrlInput.value = localStorage.getItem('backendUrl');
+            }
+            log('Ready to test. Paste configuration values and start.');
+        });
+
+        // Save Config
+        saveConfigBtn.addEventListener('click', () => {
+            localStorage.setItem('jwtToken', jwtTokenInput.value.trim());
+            localStorage.setItem('sessionId', sessionIdInput.value.trim());
+            localStorage.setItem('backendUrl', backendUrlInput.value.trim());
+            log('Configuration saved to browser localStorage!', 'success');
+            
+            // Visual indicator
+            saveConfigBtn.textContent = 'Saved Successfully!';
+            setTimeout(() => {
+                saveConfigBtn.textContent = 'Save Configuration';
+            }, 2000);
+        });
+
+        // Helper logging
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const time = new Date().toLocaleTimeString();
+            entry.textContent = `[${time}] ${message}`;
+            consoleLog.appendChild(entry);
+            consoleLog.scrollTop = consoleLog.scrollHeight;
+        }
+
+        clearLogsBtn.addEventListener('click', () => {
+            consoleLog.innerHTML = '';
+            log('Console logs cleared.');
+        });
+
+        // Set status indicators
+        function setStatus(text, type) {
+            statusText.textContent = text;
+            statusDot.className = 'status-dot';
+            if (type === 'active') statusDot.classList.add('active');
+            if (type === 'error') statusDot.classList.add('error');
+        }
+
+        // Chat send response
+        sendChatBtn.addEventListener('click', handleSendChat);
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') handleSendChat();
+        });
+
+        async function handleSendChat() {
+            const text = chatInput.value.trim();
+            if (!text) return;
+
+            const token = jwtTokenInput.value.trim();
+            const sessionId = sessionIdInput.value.trim();
+            const baseUrl = backendUrlInput.value.trim();
+
+            if (!token) {
+                alert('Please enter your JWT Authorization token first.');
+                log('Error: JWT Token is required to make secure chat requests.', 'error');
+                return;
+            }
+
+            // Append User Message to UI
+            appendMessage('user', text);
+            chatInput.value = '';
+            
+            setStatus('Sending to AI...', 'active');
+            log(`Sending response for session ${sessionId}...`);
+
+            try {
+                const response = await fetch(`${baseUrl}/api/sessions/${sessionId}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ message: text })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText || response.statusText}`);
+                }
+
+                const data = await response.json();
+                setStatus('Ready', 'active');
+                log(`Received response from server. Message ID: ${data.messageId || 'N/A'}.`, 'success');
+
+                // Append Assistant Response
+                appendMessage('ai', data.assistantMessage);
+
+                // Play Audio
+                if (data.audioBase64) {
+                    log(`Speech audio returned (${Math.round(data.audioBase64.length / 1024)} KB base64). Playing...`, 'success');
+                    playBase64(data.audioBase64, 'audio/mpeg');
+                } else {
+                    log('No audio content returned from server. Check if local TTS container is running.', 'info');
+                }
+            } catch (err) {
+                setStatus('Failed', 'error');
+                log(`Chat API Call Failed: ${err.message}`, 'error');
+                appendMessage('system', `Error: ${err.message}. Please verify your server status and JWT token.`);
+            }
+        }
+
+        function appendMessage(role, text) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            
+            const content = document.createElement('div');
+            content.textContent = text;
+            msgDiv.appendChild(content);
+
+            const timeDiv = document.createElement('div');
+            timeDiv.className = 'message-time';
+            timeDiv.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            msgDiv.appendChild(timeDiv);
+
+            chatHistory.appendChild(msgDiv);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        // Base64 Audio Playback logic
+        playBase64Btn.addEventListener('click', () => {
+            let base64Str = base64Input.value.trim();
+            if (!base64Str) {
+                alert('Please paste a base64 string first.');
+                return;
+            }
+
+            // Clean up any newlines, spaces, or wrapper quotes/JSON properties
+            base64Str = base64Str
+                .replace(/\s+/g, '') // remove spaces/newlines
+                .replace(/^["']|["']$/g, ''); // remove wrapping quotes if pasted directly from raw JSON value
+
+            // Strip prefix if user pasted 'data:audio/...;base64,' by mistake
+            if (base64Str.includes(';base64,')) {
+                base64Str = base64Str.split(';base64,')[1];
+            }
+
+            const mime = mimeTypeSelect.value;
+            log(`Manually decoding and playing pasted base64 audio (length: ${base64Str.length} chars, type: ${mime})...`);
+            
+            try {
+                playBase64(base64Str, mime);
+            } catch (e) {
+                log(`Failed to play base64: ${e.message}`, 'error');
+            }
+        });
+
+        function playBase64(base64Str, mimeType) {
+            try {
+                // Ensure valid base64 character set
+                const cleanBase64 = base64Str.replace(/[^A-Za-z0-9+/=]/g, "");
+                
+                // Set audio player source
+                audioPlayer.src = `data:${mimeType};base64,${cleanBase64}`;
+                audioPlayer.load();
+                
+                // Play and activate visualizer animation
+                audioPlayer.play()
+                    .then(() => {
+                        log('Audio playback started.', 'success');
+                        waveContainer.classList.add('playing');
+                    })
+                    .catch(err => {
+                        log(`Browser blocked autoplay or format is invalid: ${err.message}. Try clicking Play manually on the player interface.`, 'error');
+                        setStatus('Playback Error', 'error');
+                    });
+            } catch (err) {
+                log(`Error setting audio source: ${err.message}`, 'error');
+            }
+        }
+
+        // Manage audio state changes
+        audioPlayer.addEventListener('ended', () => {
+            waveContainer.classList.remove('playing');
+            log('Audio playback finished.');
+        });
+
+        audioPlayer.addEventListener('pause', () => {
+            waveContainer.classList.remove('playing');
+        });
+
+        audioPlayer.addEventListener('play', () => {
+            waveContainer.classList.add('playing');
+        });
+
+        stopAudioBtn.addEventListener('click', () => {
+            audioPlayer.pause();
+            audioPlayer.currentTime = 0;
+            waveContainer.classList.remove('playing');
+            log('Playback stopped manually.');
+        });
+    </script>
+</body>
+</html>

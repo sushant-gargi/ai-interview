@@ -34,12 +34,16 @@ public class User implements UserDetails {
     @Column(nullable = false)
     String password;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    Role role;
+
     @CreationTimestamp
     Instant createdAt;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + role.name()));
     }
 
     @Override

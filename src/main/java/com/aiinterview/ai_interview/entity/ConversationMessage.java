@@ -35,4 +35,3 @@ public class ConversationMessage {
     @CreationTimestamp
     Instant createdAt;
 }
-

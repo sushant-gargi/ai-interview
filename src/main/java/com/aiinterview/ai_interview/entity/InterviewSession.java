@@ -9,7 +9,10 @@ import org.hibernate.annotations.CreationTimestamp;
 import java.time.Instant;
 
 @Entity
-@Table(name = "interview_sessions")
+@Table(name = "interview_sessions", indexes = {
+        @Index(name = "idx_status_start", columnList = "status, scheduled_start"),
+        @Index(name = "idx_status_end", columnList = "status, scheduled_end")
+})
 @Getter
 @Setter
 @AllArgsConstructor
@@ -23,11 +26,14 @@ public class InterviewSession {
     Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    User user;
+    @JoinColumn(name = "recruiter_id", nullable = false)
+    User recruiter;
+
+    @Column(nullable = false)
+    String candidateEmail;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "resume_id", nullable = false)
+    @JoinColumn(name = "resume_id", nullable = true)
     Resume resume;
 
     String jobRole;
@@ -43,6 +49,7 @@ public class InterviewSession {
     Instant scheduledEnd;
     Instant actualStart;
     Instant actualEnd;
+    Instant lastActiveAt;
 
     @CreationTimestamp
     Instant createdAt;
