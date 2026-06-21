@@ -11,7 +11,11 @@
 <h1 align="center">🎯 AI Interview Platform</h1>
 
 <p align="center">
-  <strong>A full-stack AI-powered technical interviewing system — conduct, evaluate, and report on interviews with zero human intervention.</strong>
+  <strong>Production-Oriented AI Interview Automation Platform</strong>
+</p>
+
+<p align="center">
+  Resume-Aware Interviews · Adaptive Questioning · Voice AI · Automated Evaluation · Structured Hiring Reports
 </p>
 
 <p align="center">
@@ -25,6 +29,26 @@
 
 ---
 
+## 🎯 Production Engineering Highlights
+
+✔ AI-driven adaptive interviewing using Spring AI and OpenRouter
+
+✔ Resume-aware and Job Description-aware conversational evaluation
+
+✔ Scheduler-driven handling of no-shows, abandoned sessions, and lifecycle automation
+
+✔ Structured LLM outputs using BeanOutputConverter for type-safe report generation
+
+✔ Stateless JWT authentication with method-level role-based authorization
+
+✔ Voice-enabled interview experience using Speech-to-Text and Kokoro TTS
+
+✔ Idempotent report generation to prevent duplicate evaluation records
+
+✔ PostgreSQL persistence with JSON column support and custom JPQL queries
+
+---
+
 ## What It Does
 
 AI Interview Platform is a production-oriented AI interviewing backend built with Spring Boot, Spring AI, and PostgreSQL. It automates the complete interview lifecycle—from session scheduling and resume processing to AI-driven interviewing, evaluation, and report generation.
@@ -33,7 +57,20 @@ Recruiters create interview sessions, candidates upload resumes and join through
 
 The platform includes automated session lifecycle management, structured AI evaluation reports, PDF export capabilities, email notifications, and scheduler-driven handling of no-shows and abandoned interviews with minimal operational intervention.
 
-The whole thing requires **zero human intervention** after scheduling.
+The interview lifecycle is automated from scheduling through evaluation with minimal recruiter intervention.
+
+---
+
+## 📊 System Capabilities
+
+- Automated session lifecycle management through scheduled background jobs
+- Concurrent-safe and idempotent report generation workflows
+- Stateless JWT authentication with role-based access control
+- Resume-aware and JD-aware AI evaluation pipeline
+- Voice-enabled interviewing using Speech-to-Text and Text-to-Speech
+- PostgreSQL persistence with JSON-based structured evaluation reports
+- Fault-tolerant processing with isolated email, AI, and TTS failures
+- End-to-end interview automation with minimal human intervention
 
 ---
 
@@ -127,6 +164,98 @@ users (id, name, email, password, role[RECRUITER|CANDIDATE], createdAt)
 
 resumes (id, user_id, fileName, filePath, parsedText)
 ```
+
+## ⚡ Key Engineering Challenges Solved
+
+### 1. Preventing Duplicate Evaluation Reports
+
+Three independent execution paths can generate reports:
+
+- Candidate manually ends interview
+- No-show scheduler expires session
+- Disconnect scheduler auto-completes session
+
+Without protection, concurrent execution could create duplicate reports.
+
+**Solution**
+
+- Report generation is idempotent
+- Every report path checks for an existing report before persisting
+- Multiple invocations safely converge to a single report
+
+---
+
+### 2. Maintaining Accurate Interview State Without WebSockets
+
+The platform must detect candidate disconnects and abandoned interviews.
+
+A WebSocket solution would introduce connection management complexity and infrastructure overhead.
+
+**Solution**
+
+- Lightweight heartbeat endpoint updates `lastActiveAt`
+- Background scheduler evaluates inactivity windows
+- Sessions are automatically completed when abandonment conditions are met
+
+This provides reliable disconnect detection while keeping the architecture stateless.
+
+---
+
+### 3. Keeping AI Responses Suitable for Voice Conversations
+
+Most LLMs naturally generate long-form responses.
+
+Long responses create poor voice interview experiences and increase candidate cognitive load.
+
+**Solution**
+
+- System prompt enforces strict conversational constraints
+- Responses are limited to short spoken interactions
+- AI asks exactly one question at a time
+- Output is optimized specifically for TTS playback
+
+---
+
+### 4. Time-Aware AI Without Storing Runtime State in Memory
+
+The interviewer must know when an interview is approaching completion.
+
+Persisting countdown state inside the conversation context introduces synchronization problems.
+
+**Solution**
+
+- Remaining time is calculated dynamically for every request
+- A transient system instruction is injected into the prompt
+- The AI always receives an accurate countdown without storing mutable interview state
+
+---
+
+### 5. Full Conversation Reconstruction Without In-Memory Sessions
+
+Many chatbot systems maintain server-side conversation state.
+
+This complicates horizontal scaling and recovery.
+
+**Solution**
+
+- Every conversation message is persisted
+- ChatService remains stateless
+- Conversation history is rebuilt from the database on each request
+- Any application instance can continue the interview seamlessly
+
+---
+
+### 6. Graceful Failure of Non-Critical Services
+
+Email delivery, TTS generation, and report creation involve external systems.
+
+A failure in these services should never invalidate interview progress.
+
+**Solution**
+
+- External integrations are isolated behind service boundaries
+- Failures are logged and contained
+- Core interview state transitions always succeed independently
 
 ---
 
@@ -352,6 +481,17 @@ src/main/java/com/aiinterview/ai_interview/
 - File uploads are saved with **UUID-prefixed filenames** to prevent path traversal and filename collisions
 - `SYSTEM` role messages are filtered out of the `/chat` history response — internal prompts are never exposed to the client
 - Spring Security's `@PreAuthorize("hasRole('RECRUITER')")` enforces role separation at the method level
+
+---
+
+## Future Enhancements
+
+- WebSocket-based live interviewer presence
+- Vector database for long resume retrieval
+- Multi-round interview workflows
+- Recruiter analytics dashboard
+- Real-time interview monitoring
+- Interview recording and playback
 
 ---
 
