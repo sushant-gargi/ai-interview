@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
   <img src="https://img.shields.io/badge/Spring_AI-Integrated-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
   <img src="https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
   <img src="https://img.shields.io/badge/PostgreSQL-15-336791?style=for-the-badge&logo=postgresql&logoColor=white"/>
@@ -27,7 +27,11 @@
 
 ## What It Does
 
-AI Interview Platform is a **production-grade backend system** that automates technical interviews end-to-end. A recruiter schedules a session; the candidate joins, uploads their resume, and is interviewed by a conversational AI that adapts its questions in real time. When the session ends — whether by completion, timeout, or candidate no-show — the system automatically generates a structured evaluation report with skill scores, hiring recommendations, and a question-by-question breakdown.
+AI Interview Platform is a production-oriented AI interviewing backend built with Spring Boot, Spring AI, and PostgreSQL. It automates the complete interview lifecycle—from session scheduling and resume processing to AI-driven interviewing, evaluation, and report generation.
+
+Recruiters create interview sessions, candidates upload resumes and join through a voice-enabled interview lobby, and an AI interviewer dynamically adapts questions based on the candidate's responses, resume content, and job requirements.
+
+The platform includes automated session lifecycle management, structured AI evaluation reports, PDF export capabilities, email notifications, and scheduler-driven handling of no-shows and abandoned interviews with minimal operational intervention.
 
 The whole thing requires **zero human intervention** after scheduling.
 
