@@ -1,9 +1,9 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Spring_AI-Integrated-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
-  <img src="https://img.shields.io/badge/Java-17+-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
-  <img src="https://img.shields.io/badge/PostgreSQL-15-336791?style=for-the-badge&logo=postgresql&logoColor=white"/>
-  <img src="https://img.shields.io/badge/JWT-Auth-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Spring_Boot-4.0.6-6DB33F?style=for-the-badge&logo=springboot&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Spring_AI-2.0.0--M1-6DB33F?style=for-the-badge&logo=spring&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white"/>
+  <img src="https://img.shields.io/badge/PostgreSQL-Integrated-336791?style=for-the-badge&logo=postgresql&logoColor=white"/>
+  <img src="https://img.shields.io/badge/JWT-JJWT_0.12.6-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white"/>
   <img src="https://img.shields.io/badge/OpenRouter-LLM-7C3AED?style=for-the-badge"/>
   <img src="https://img.shields.io/badge/Kokoro-TTS-06B6D4?style=for-the-badge"/>
 </p>
@@ -11,7 +11,7 @@
 <h1 align="center">🎯 AI Interview Platform</h1>
 
 <p align="center">
-  <strong>Production-Oriented AI Interview Automation Platform</strong>
+  <strong>AI-Powered Technical Interview Automation — Built with Spring Boot 4, Spring AI, and PostgreSQL</strong>
 </p>
 
 <p align="center">
@@ -29,79 +29,81 @@
 
 ---
 
-## 🎯 Production Engineering Highlights
+## 🎯 Engineering Highlights
 
-✔ AI-driven adaptive interviewing using Spring AI and OpenRouter
+✔ AI-driven adaptive interviewing using Spring AI 2.0 and OpenRouter
 
-✔ Resume-aware and Job Description-aware conversational evaluation
+✔ Resume-aware and Job Description-aware conversational evaluation (3000-char context truncation)
 
-✔ Scheduler-driven handling of no-shows, abandoned sessions, and lifecycle automation
+✔ Scheduler-driven lifecycle: no-show detection, abandoned session recovery, auto-reporting
 
-✔ Structured LLM outputs using BeanOutputConverter for type-safe report generation
+✔ Structured LLM output using `BeanOutputConverter<AiReportResult>` for type-safe report generation
 
-✔ Stateless JWT authentication with method-level role-based authorization
+✔ Stateless JWT authentication with method-level role-based authorization (`@PreAuthorize`)
 
-✔ Voice-enabled interview experience using Speech-to-Text and Kokoro TTS
+✔ Voice-enabled interview experience: Web Speech API STT + Kokoro TTS → Base64 MP3
 
-✔ Idempotent report generation to prevent duplicate evaluation records
+✔ Idempotent report generation — all three report paths are safe to invoke multiple times
 
-✔ PostgreSQL persistence with JSON column support and custom JPQL queries
+✔ PostgreSQL with `@JdbcTypeCode(SqlTypes.JSON)` columns and composite indexes on scheduler-critical queries
+
+✔ Java 21 Records used for all DTOs — 17 immutable record types across the codebase
+
+✔ `open-in-view: false` and `FetchType.LAZY` on all relations — JPA configured for production behaviour
 
 ---
 
 ## What It Does
 
-AI Interview Platform is a production-oriented AI interviewing backend built with Spring Boot, Spring AI, and PostgreSQL. It automates the complete interview lifecycle—from session scheduling and resume processing to AI-driven interviewing, evaluation, and report generation.
+AI Interview Platform automates the complete technical interview lifecycle. A recruiter creates a session with a job role, job description, and candidate email. The candidate receives an HTML email invite, uploads their resume in the lobby, and is interviewed by an AI that adapts its questions based on their resume, the job requirements, and each individual answer.
 
-Recruiters create interview sessions, candidates upload resumes and join through a voice-enabled interview lobby, and an AI interviewer dynamically adapts questions based on the candidate's responses, resume content, and job requirements.
+When the session ends — whether the candidate finishes normally, disconnects, or never shows up — the system automatically generates a structured evaluation report with an overall score, a hiring recommendation, a per-skill breakdown, and question-by-question scoring. A report-ready notification is emailed to the recruiter.
 
-The platform includes automated session lifecycle management, structured AI evaluation reports, PDF export capabilities, email notifications, and scheduler-driven handling of no-shows and abandoned interviews with minimal operational intervention.
-
-The interview lifecycle is automated from scheduling through evaluation with minimal recruiter intervention.
+No human intervention is required after scheduling.
 
 ---
 
 ## 📊 System Capabilities
 
-- Automated session lifecycle management through scheduled background jobs
-- Concurrent-safe and idempotent report generation workflows
-- Stateless JWT authentication with role-based access control
-- Resume-aware and JD-aware AI evaluation pipeline
-- Voice-enabled interviewing using Speech-to-Text and Text-to-Speech
-- PostgreSQL persistence with JSON-based structured evaluation reports
-- Fault-tolerant processing with isolated email, AI, and TTS failures
-- End-to-end interview automation with minimal human intervention
+- Automated session lifecycle via two independent `@Scheduled` background jobs
+- Idempotent report generation — three distinct paths, one report, no duplicates
+- Stateless JWT authentication with RBAC enforced at the method and service layer
+- Resume-aware and JD-aware AI evaluation pipeline with context-length management
+- Voice-enabled interviewing: Speech-to-Text input + TTS audio output per response
+- `@JdbcTypeCode(SqlTypes.JSON)` PostgreSQL columns for skill breakdown and Q&A scoring
+- Fault-tolerant external integrations — email, TTS, and report failures never abort core state transitions
+- Scheduler queries bounded to `TOP 100` to prevent memory pressure under high load
 
 ---
 
 ## ✨ Key Features
 
 ### Recruiter Side
-- **Session Management** — Create, schedule, and delete interview sessions with validation (no past dates, no self-interview, no repeat candidates within 1 year)
-- **Role-Based Access Control** — `RECRUITER` and `CANDIDATE` roles enforced at the method level via Spring Security's `@PreAuthorize`
-- **Structured Evaluation Reports** — AI-generated reports with overall score (0–10), hiring recommendation (`STRONG_YES` / `YES` / `MAYBE` / `NO`), per-skill breakdown map, and per-question scoring
-- **PDF Report Export** — Download evaluation reports as formatted PDFs (generated with Apache PDFBox)
-- **Automated Email Notifications** — HTML email invites sent to candidates on session creation; report-ready alerts sent to recruiters on completion (via JavaMail + Mailtrap)
+- **Session Management** — Create, schedule, and delete interview sessions with validation: no past dates, no self-interview, no repeat candidates within 1 year (`hasCompletedSessionInLastYear` JPQL query)
+- **Role-Based Access Control** — `RECRUITER` and `CANDIDATE` roles enforced at the controller level via `@PreAuthorize("hasRole('RECRUITER')")` and at the service level via `user.getRole() != Role.CANDIDATE`
+- **Structured Evaluation Reports** — AI-generated reports with overall score (0–10), hiring recommendation (`STRONG_YES` / `YES` / `MAYBE` / `NO`), per-skill breakdown, and per-question scoring — parsed type-safely via `BeanOutputConverter<AiReportResult>`
+- **PDF Report Export** — Multi-page evaluation PDFs generated with Apache PDFBox 3.0.3, with automatic page-break detection
+- **Automated Email Notifications** — Responsive HTML email invites sent to candidates on session creation; report-ready summaries with score rings sent to recruiters on completion
 
 ### Candidate Side
-- **Resume Upload & Parsing** — PDF resumes parsed to plain text using PDFBox and injected into the AI's system context before the interview begins
-- **Lobby Gate** — Resume must be uploaded before the interview can start (hard enforcement)
-- **Live Voice Interview** — Browser-native Speech-to-Text (Web Speech API) converts the candidate's spoken answers to text; AI responses are synthesized to speech via Kokoro TTS and streamed as Base64-encoded MP3
-- **Heartbeat Tracking** — Periodic heartbeats from the frontend update `lastActiveAt` so the backend knows the candidate is still present
+- **Resume Upload & Parsing** — PDF resumes extracted to plain text using `PDFTextStripper`, UUID-prefixed on disk to prevent path traversal, and injected into the AI system prompt before the first question
+- **Lobby Gate** — `session.getResume() == null` is a hard stop: the interview cannot start without an uploaded resume
+- **Live Voice Interview** — Web Speech API (Chrome/Edge) converts spoken answers to text with continuous recognition and 3-second silence auto-submit; AI responses are synthesised by Kokoro TTS and returned as Base64 MP3 audio
+- **Heartbeat Tracking** — `POST /heartbeat` updates `lastActiveAt`; the disconnect scheduler uses this to detect abandoned sessions
 
 ### AI Interviewer Engine
-- **Adaptive Questioning** — The AI is instructed to read each answer for depth, probe with follow-up questions ("Why did you choose that?", "What are the edge cases?"), and never repeat a static checklist
-- **Resume + JD Aware** — System prompt includes the candidate's parsed resume and the full job description (truncated at 3000 chars each to respect context limits)
-- **Time-Aware Prompting** — A transient system message is injected into every turn with `minutesRemaining`; the AI is instructed to issue a soft closure warning in the final 2 minutes
-- **Voice-Optimised Format** — System rules enforce 2–3 sentence maximum responses with no markdown, no bullet lists — output designed for TTS playback
-- **Structured Report Generation** — End-of-session evaluation uses `BeanOutputConverter<AiReportResult>` for type-safe JSON parsing of the LLM's scoring response
+- **Adaptive Questioning** — System prompt instructs the AI to analyse each answer for depth, probe with targeted follow-ups ("Why did you choose that?", "What are the edge cases?"), and ask exactly one question at a time
+- **Resume + JD Context** — Parsed resume text and job description are each truncated to 3000 characters and injected into the system prompt to keep the AI within LLM context limits
+- **Time-Aware Prompting** — `minutesRemaining` is calculated dynamically on every turn and injected as a transient `SystemMessage`; the AI issues a soft closure warning in the final 2 minutes without persisting state
+- **Voice-Optimised Output** — System rules enforce 2–3 sentence responses with no markdown or bullet lists — output is designed for TTS playback rather than reading
+- **Structured Report Generation** — `BeanOutputConverter<AiReportResult>` injects the Jackson JSON schema into the evaluation prompt and provides typed `convert()` parsing; markdown fences in the response are stripped before parsing for compatibility with different models
 
 ### Reliability & Automation
-- **Scheduled Session Cleanup** — Two background jobs run every 60 seconds:
-  - **No-Show Rule**: SCHEDULED sessions past their grace period are auto-expired with a no-show report
-  - **Disconnect Safety Rule**: IN_PROGRESS sessions exceeding their scheduled end time are auto-completed with a partial evaluation
-- **Idempotent Report Generation** — All report generation paths check for an existing report before writing; safe to call multiple times
-- **Graceful Error Isolation** — Email failures, TTS failures, and report generation failures are caught and logged; they never roll back the primary business transaction
+- **Scheduled Session Cleanup** — Two `@Scheduled(fixedDelay = 60000)` jobs with staggered `initialDelay` (10s and 15s) to avoid startup contention:
+  - **No-Show Rule**: SCHEDULED sessions past `scheduledStart + 5 minutes` are marked EXPIRED; a no-show report is generated
+  - **Disconnect Safety Rule**: IN_PROGRESS sessions past their `scheduledEnd + 5 minutes` or with stale `lastActiveAt` are auto-completed with a partial evaluation
+- **Idempotent Report Generation** — `generateCompletedReport()`, `generateNoShowReport()`, and `generateAbandonedSessionReport()` all check for an existing report before writing; safe to call from multiple paths
+- **Graceful Error Isolation** — TTS, email, and report failures are caught and logged individually; they never propagate to the HTTP response or roll back the session state transition
 
 ---
 
@@ -110,225 +112,191 @@ The interview lifecycle is automated from scheduling through evaluation with min
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                      CLIENT LAYER                           │
-│   Browser (HTML/JS) — Voice STT + Audio Playback UI         │
+│   Browser (HTML/JS) — Web Speech API STT + Kokoro TTS UI   │
 │   Recruiter Dashboard · Candidate Interview Lobby           │
 └──────────────────────┬──────────────────────────────────────┘
                        │ REST + JWT Bearer
 ┌──────────────────────▼──────────────────────────────────────┐
-│                   SPRING BOOT BACKEND (port 8181)           │
+│            SPRING BOOT 4.0.6 BACKEND (port 8181)            │
 │                                                             │
 │  Controllers: Auth · Chat · InterviewSession · Recruiter    │
 │                                                             │
 │  Services:                                                  │
-│   ├─ AuthService         (JWT generation & validation)      │
-│   ├─ InterviewSessionService (lifecycle, gates, RBAC)       │
-│   ├─ ChatService         (LLM orchestration, history)       │
-│   ├─ ReportService       (AI eval, idempotent write)        │
-│   ├─ ResumeService       (PDF parse, session binding)       │
-│   ├─ TtsService          (Kokoro speech synthesis)          │
-│   ├─ EmailService        (HTML invite + report alerts)      │
-│   └─ PdfReportService    (PDFBox report rendering)          │
+│   ├─ AuthService              (BCrypt + JJWT 0.12.6)        │
+│   ├─ InterviewSessionService  (lifecycle gates, RBAC)       │
+│   ├─ ChatService              (Spring AI orchestration)     │
+│   │    └─ ChatClient + SimpleLoggerAdvisor                  │
+│   ├─ ReportService            (idempotent AI evaluation)    │
+│   ├─ ResumeService            (PDFBox parse + UUID naming)  │
+│   ├─ TtsService               (Kokoro RestClient)           │
+│   ├─ EmailService             (HTML templates + JavaMail)   │
+│   └─ PdfReportService         (multi-page PDFBox renderer)  │
 │                                                             │
-│  Scheduling:                                                │
-│   ├─ cleanupExpiredGracePeriods()  → every 60s             │
-│   └─ cleanupAbandonedSessions()    → every 60s             │
+│  Scheduling (@Scheduled, fixedDelay=60s):                   │
+│   ├─ cleanupExpiredGracePeriods()   [initialDelay=10s]      │
+│   └─ cleanupAbandonedSessions()     [initialDelay=15s]      │
 └──────┬─────────────────────┬───────────────────────────────┘
        │                     │
 ┌──────▼──────┐    ┌─────────▼────────────────────────────────┐
 │ PostgreSQL  │    │          EXTERNAL SERVICES                │
 │  (port 5455)│    │                                          │
-│             │    │  OpenRouter / OpenAI-compatible LLM API  │
-│ Tables:     │    │  (model: openrouter/owl-alpha)           │
+│             │    │  OpenRouter (openrouter/owl-alpha)        │
+│ Entities:   │    │  OpenAI-compatible chat API              │
 │  users      │    │                                          │
 │  interview_ │    │  Kokoro TTS (local, port 8801)           │
-│   sessions  │    │  OpenAI-compatible /v1/audio/speech      │
+│   sessions  │    │  OpenAI-compatible audio/speech          │
 │  conv_msgs  │    │                                          │
-│  resumes    │    │  Mailtrap SMTP (sandbox email testing)   │
+│  resumes    │    │  Mailtrap SMTP (sandbox.smtp.mailtrap.io)│
 │  reports    │    │                                          │
-└─────────────┘    └──────────────────────────────────────────┘
+│             │    └──────────────────────────────────────────┘
+│ Indexes:    │
+│  idx_status_start (status, scheduled_start)
+│  idx_status_end   (status, scheduled_end)
+└─────────────┘
 ```
 
 ### Data Model
 
 ```
-users (id, name, email, password, role[RECRUITER|CANDIDATE], createdAt)
+users (id, name, email[unique], password, role[RECRUITER|CANDIDATE], createdAt)
   │
   └──< interview_sessions (id, recruiter_id, candidateEmail, resume_id,
                            jobRole, jobDescription, status, scheduledStart,
-                           scheduledEnd, actualStart, actualEnd, lastActiveAt)
+                           scheduledEnd, actualStart, actualEnd, lastActiveAt, createdAt)
+         │                [indexed on (status, scheduledStart) and (status, scheduledEnd)]
          │
-         ├──< conversation_messages (id, session_id, role[SYSTEM|USER|ASSISTANT], content)
+         ├──< conversation_messages (id, session_id, role[SYSTEM|USER|ASSISTANT], content[TEXT])
          │
-         └──< reports (id, session_id, summary, overallScore, recommendation,
-                       skillBreakdown[JSON], questionScores[JSON])
+         └──◇  reports (id, session_id[1:1], summary[TEXT], overallScore,
+                        recommendation[ENUM], skillBreakdown[JSON], questionScores[JSON])
 
-resumes (id, user_id, fileName, filePath, parsedText)
+resumes (id, user_id, fileName, filePath[UUID-prefixed], parsedText[TEXT], uploadedAt)
 ```
+
+---
 
 ## ⚡ Key Engineering Challenges Solved
 
 ### 1. Preventing Duplicate Evaluation Reports
 
-Three independent execution paths can generate reports:
+Three independent paths can trigger report generation — the candidate manually ending the session, the no-show scheduler, and the disconnect scheduler. Without protection, concurrent execution could produce duplicate records.
 
-- Candidate manually ends interview
-- No-show scheduler expires session
-- Disconnect scheduler auto-completes session
-
-Without protection, concurrent execution could create duplicate reports.
-
-**Solution**
-
-- Report generation is idempotent
-- Every report path checks for an existing report before persisting
-- Multiple invocations safely converge to a single report
+**Solution:** Every report generation method checks for an existing report via `reportRepository.findBySessionId(sessionId).isPresent()` before writing. All three paths converge safely to a single record.
 
 ---
 
-### 2. Maintaining Accurate Interview State Without WebSockets
+### 2. Detecting Abandoned Interviews Without WebSockets
 
-The platform must detect candidate disconnects and abandoned interviews.
+The platform must know when a candidate disconnects mid-interview. A WebSocket approach would introduce connection management complexity and break the stateless architecture.
 
-A WebSocket solution would introduce connection management complexity and infrastructure overhead.
-
-**Solution**
-
-- Lightweight heartbeat endpoint updates `lastActiveAt`
-- Background scheduler evaluates inactivity windows
-- Sessions are automatically completed when abandonment conditions are met
-
-This provides reliable disconnect detection while keeping the architecture stateless.
+**Solution:** The frontend sends a lightweight `POST /heartbeat` every few seconds, updating `lastActiveAt` on the session. The background scheduler compares this timestamp against `scheduledEnd + ABANDON_BUFFER_MINUTES` and auto-completes stale sessions.
 
 ---
 
-### 3. Keeping AI Responses Suitable for Voice Conversations
+### 3. Keeping AI Responses Suitable for Voice
 
-Most LLMs naturally generate long-form responses.
+Most LLMs generate long-form, markdown-heavy responses by default. Long responses create poor TTS playback experiences and increase candidate cognitive load mid-interview.
 
-Long responses create poor voice interview experiences and increase candidate cognitive load.
-
-**Solution**
-
-- System prompt enforces strict conversational constraints
-- Responses are limited to short spoken interactions
-- AI asks exactly one question at a time
-- Output is optimized specifically for TTS playback
+**Solution:** The system prompt enforces strict output constraints — maximum 2–3 sentences, no markdown, no bullet lists, one question per response. The AI is designed to be a voice conversationalist, not a document generator.
 
 ---
 
-### 4. Time-Aware AI Without Storing Runtime State in Memory
+### 4. Time-Aware AI Without Persisted State
 
-The interviewer must know when an interview is approaching completion.
+The interviewer must know when the session is approaching its end time, but storing a countdown in the database or in-memory introduces synchronization problems.
 
-Persisting countdown state inside the conversation context introduces synchronization problems.
-
-**Solution**
-
-- Remaining time is calculated dynamically for every request
-- A transient system instruction is injected into the prompt
-- The AI always receives an accurate countdown without storing mutable interview state
+**Solution:** `minutesRemaining` is calculated dynamically at request time (`Duration.between(Instant.now(), session.getScheduledEnd()).toMinutes()`) and injected as a transient `SystemMessage` that is never persisted. The system prompt remains immutable; the AI always receives an accurate countdown.
 
 ---
 
-### 5. Full Conversation Reconstruction Without In-Memory Sessions
+### 5. Stateless Conversation Reconstruction
 
-Many chatbot systems maintain server-side conversation state.
+Many chat systems keep an in-memory conversation state, which breaks horizontal scaling and recovery after restarts.
 
-This complicates horizontal scaling and recovery.
-
-**Solution**
-
-- Every conversation message is persisted
-- ChatService remains stateless
-- Conversation history is rebuilt from the database on each request
-- Any application instance can continue the interview seamlessly
+**Solution:** Every message — including `SYSTEM`, `USER`, and `ASSISTANT` — is persisted to `conversation_messages`. `ChatServiceImpl` is fully stateless: it rebuilds the Spring AI message list from the database on every turn. Any instance can handle any request.
 
 ---
 
-### 6. Graceful Failure of Non-Critical Services
+### 6. Graceful Failure of Non-Critical Integrations
 
-Email delivery, TTS generation, and report creation involve external systems.
+Email, TTS, and report generation each involve external systems that can fail independently. A failure in any of them should never invalidate the interview or the session state.
 
-A failure in these services should never invalidate interview progress.
-
-**Solution**
-
-- External integrations are isolated behind service boundaries
-- Failures are logged and contained
-- Core interview state transitions always succeed independently
+**Solution:** Each external call is wrapped in an isolated try-catch block. Failures are logged at `ERROR` level and swallowed. Core state transitions (session status, message persistence) are committed independently before external calls are made.
 
 ---
 
 ## 🛠 Tech Stack
 
-| Layer | Technology | Purpose |
+| Layer | Technology | Details |
 |:---|:---|:---|
-| **Framework** | Spring Boot 3.x | Core application runtime |
-| **AI** | Spring AI + OpenRouter API | LLM chat orchestration, `BeanOutputConverter` for structured output |
-| **Security** | Spring Security + JJWT | Stateless JWT auth, method-level RBAC |
-| **Database** | PostgreSQL 15 + Spring Data JPA | Persistence; Hibernate `ddl-auto: update` |
-| **Scheduling** | Spring `@Scheduled` | Background session lifecycle management |
-| **PDF** | Apache PDFBox | Resume text extraction + evaluation PDF generation |
-| **TTS** | Kokoro (local) | AI interviewer voice synthesis, MP3 stream → Base64 |
-| **Email** | JavaMail + Mailtrap | HTML interview invites + report-ready notifications |
-| **Validation** | Jakarta Bean Validation | Input validation on all request DTOs |
-| **Docs** | SpringDoc / Swagger UI | Auto-generated API docs at `/swagger-ui.html` |
-| **Frontend** | Vanilla HTML/JS | Lightweight interview UI with Web Speech API STT |
+| **Framework** | Spring Boot 4.0.6 | Core runtime, auto-configuration |
+| **AI / LLM** | Spring AI 2.0.0-M1 + OpenRouter | `ChatClient`, `BeanOutputConverter`, `SimpleLoggerAdvisor` |
+| **Security** | Spring Security + JJWT 0.12.6 | Stateless JWT, `@PreAuthorize`, `OncePerRequestFilter` |
+| **Database** | PostgreSQL + Spring Data JPA | Hibernate `ddl-auto: update`, `open-in-view: false`, `FetchType.LAZY` |
+| **Scheduling** | Spring `@Scheduled` | Two jobs, `fixedDelay=60s`, staggered `initialDelay` |
+| **PDF** | Apache PDFBox 3.0.3 | Resume text extraction + multi-page report rendering |
+| **TTS** | Kokoro (local, port 8801) | `RestClient` POST → Base64 MP3 response |
+| **Email** | JavaMail + Mailtrap sandbox | `MimeMessageHelper`, responsive HTML templates |
+| **Validation** | Jakarta Bean Validation | `@NotBlank`, `@Email`, `@Size` on all request records |
+| **Utilities** | Lombok | `@Builder`, `@Getter`, `@Setter`, `@RequiredArgsConstructor`, `@Slf4j`, `@FieldDefaults` |
+| **API Docs** | SpringDoc OpenAPI 2.8.8 | Swagger UI at `/swagger-ui.html` |
+| **Frontend** | Vanilla HTML/JS | Single-file UI, Web Speech API STT, Base64 audio playback |
 
 ---
 
 ## 🔄 Session Lifecycle
 
 ```
-SCHEDULED ──(candidate uploads resume + joins within grace period)──► IN_PROGRESS
-     │                                                                      │
-     │ (no-show: grace period expires)                      (candidate ends │ or disconnect)
-     ▼                                                                      ▼
-  EXPIRED ◄──────────────────────────────────────────────────────────── COMPLETED
-  [no-show report]                                                    [eval report]
+SCHEDULED ──(resume uploaded + candidate joins within grace period)──► IN_PROGRESS
+     │                                                                       │
+     │ [scheduler: scheduledStart + 5min elapsed, no join]   [candidate ends │ or scheduler:
+     ▼                                                         scheduledEnd + │ 5min + stale heartbeat]
+  EXPIRED                                                                    ▼
+  [no-show report: score 0, recommendation NO]                          COMPLETED
+                                                                    [AI evaluation report]
 ```
 
 **State Transition Rules (enforced server-side):**
-- Only `CANDIDATE` role can call `startSession`
-- Resume upload is required before `startSession` (hard gate)
-- Session cannot be started before `scheduledStart` or after `scheduledStart + 5 min` (grace period)
-- Recruiters cannot create sessions for themselves (email check)
-- Candidates cannot complete an interview more than once per year
-- Recruiters can only delete their own `SCHEDULED` sessions
+- Only users with `role = CANDIDATE` can call `startSession` (role check, not just email check)
+- Resume upload required before `startSession` — hard gate with `BadRequestException`
+- Session cannot start before `scheduledStart` or after `scheduledStart + 5 min`
+- Recruiters cannot create sessions for themselves (email equality check)
+- Candidates cannot complete an interview more than once per calendar year
+- Recruiters can only delete their own `SCHEDULED` sessions (not IN_PROGRESS or COMPLETED)
 
 ---
 
 ## 📡 API Reference
 
 ### Auth
-| Method | Endpoint | Role | Description |
+| Method | Endpoint | Auth | Description |
 |:---|:---|:---|:---|
-| `POST` | `/api/auth/signup` | Public | Register as Recruiter or Candidate |
-| `POST` | `/api/auth/login` | Public | Login and receive JWT token |
+| `POST` | `/api/auth/signup` | Public | Register; `role` field defaults to `CANDIDATE`, accepts `RECRUITER` |
+| `POST` | `/api/auth/login` | Public | Authenticate and receive signed JWT token |
 
 ### Sessions (Candidate)
-| Method | Endpoint | Role | Description |
+| Method | Endpoint | Auth | Description |
 |:---|:---|:---|:---|
-| `GET` | `/api/sessions` | Candidate | List all my sessions |
-| `POST` | `/api/sessions/{id}/resume` | Candidate | Upload resume PDF for a session |
-| `POST` | `/api/sessions/{id}/start` | Candidate | Start the interview (validates all gates) |
-| `POST` | `/api/sessions/{id}/heartbeat` | Candidate | Keep session alive (updates `lastActiveAt`) |
+| `GET` | `/api/sessions` | Bearer | List all sessions where `candidateEmail` matches current user |
+| `POST` | `/api/sessions/{id}/resume` | Bearer | Upload resume PDF; session must be SCHEDULED |
+| `POST` | `/api/sessions/{id}/start` | Bearer | Start interview; validates all gates, initialises AI context |
+| `POST` | `/api/sessions/{id}/heartbeat` | Bearer | Update `lastActiveAt`; session must be IN_PROGRESS |
 
 ### Chat
-| Method | Endpoint | Role | Description |
+| Method | Endpoint | Auth | Description |
 |:---|:---|:---|:---|
-| `POST` | `/api/sessions/{id}/chat` | Candidate | Send a message; receive AI response + TTS audio |
-| `GET` | `/api/sessions/{id}/chat` | Candidate | Retrieve full chat history (SYSTEM messages filtered) |
-| `POST` | `/api/sessions/{id}/chat/end` | Candidate | End session and trigger report generation |
+| `POST` | `/api/sessions/{id}/chat` | Bearer | Send message; receives AI text + Base64 TTS audio |
+| `GET` | `/api/sessions/{id}/chat` | Bearer | Retrieve history; SYSTEM messages filtered from response |
+| `POST` | `/api/sessions/{id}/chat/end` | Bearer | Mark COMPLETED and trigger evaluation report |
 
 ### Recruiter
-| Method | Endpoint | Role | Description |
+| Method | Endpoint | Auth | Description |
 |:---|:---|:---|:---|
-| `POST` | `/api/recruiter/sessions` | Recruiter | Create a new interview session |
-| `GET` | `/api/recruiter/sessions` | Recruiter | List all sessions created by me |
-| `DELETE` | `/api/recruiter/sessions/{id}` | Recruiter | Delete a SCHEDULED session |
-| `GET` | `/api/recruiter/sessions/{id}/report` | Recruiter | Get structured JSON evaluation report |
-| `GET` | `/api/recruiter/sessions/{id}/report/pdf` | Recruiter | Download evaluation report as PDF |
+| `POST` | `/api/recruiter/sessions` | Recruiter | Create session; sends HTML invite email to candidate |
+| `GET` | `/api/recruiter/sessions` | Recruiter | List all sessions created by authenticated recruiter |
+| `DELETE` | `/api/recruiter/sessions/{id}` | Recruiter | Delete SCHEDULED session; cleans up resume file on disk |
+| `GET` | `/api/recruiter/sessions/{id}/report` | Recruiter | Retrieve structured JSON evaluation report |
+| `GET` | `/api/recruiter/sessions/{id}/report/pdf` | Recruiter | Download evaluation as multi-page PDF |
 
 All protected endpoints require `Authorization: Bearer <token>` header.
 
@@ -338,10 +306,10 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 
 ### Prerequisites
 
-- Java 17+
-- PostgreSQL 15 (running on port `5455`)
-- [Kokoro TTS](https://github.com/thewh1teagle/kokoro-onnx) (optional — voice synthesis, port `8801`)
-- An [OpenRouter](https://openrouter.ai) API key (or any OpenAI-compatible endpoint)
+- **Java 21** (required — `<java.version>21</java.version>` in pom.xml)
+- PostgreSQL running on port `5455`
+- [Kokoro TTS](https://github.com/thewh1teagle/kokoro-onnx) (optional — voice synthesis on port `8801`; set `app.tts.enabled: false` to skip)
+- An [OpenRouter](https://openrouter.ai) API key (or any OpenAI-compatible LLM endpoint)
 
 ### 1. Database Setup
 
@@ -349,7 +317,7 @@ All protected endpoints require `Authorization: Bearer <token>` header.
 CREATE DATABASE ai_interview;
 ```
 
-Hibernate will auto-create all tables on first run (`ddl-auto: update`).
+Hibernate with `ddl-auto: update` creates all tables on first boot.
 
 ### 2. Configuration
 
@@ -371,13 +339,13 @@ spring:
 
 app:
   jwt:
-    secret: YOUR_256_BIT_HEX_SECRET    # min 32 bytes
+    secret: YOUR_256_BIT_HEX_SECRET    # minimum 32 bytes
     expiration-ms: 86400000            # 24 hours
   tts:
-    enabled: true                      # set false to disable voice
+    enabled: true                      # set false to disable Kokoro
     url: http://localhost:8801/v1/audio/speech
   mail:
-    enabled: true                      # set false to skip emails
+    enabled: true                      # set false to skip email sending
     from: noreply@aiinterview.com
 ```
 
@@ -387,38 +355,47 @@ app:
 ./mvnw spring-boot:run
 ```
 
-Server starts on **port 8181**. Swagger UI is available at:
+Server starts on **port 8181**. Swagger UI is at:
 
 ```
 http://localhost:8181/swagger-ui.html
 ```
 
-### 4. Try the Interview UI
+### 4. Interview UI
 
-Open `src/main/resources/static/index.html` (or the served path) in **Google Chrome** or **Microsoft Edge** (required for Web Speech API).
+Open the served HTML page in **Google Chrome** or **Microsoft Edge** (required for Web Speech API).
 
-1. Enter your candidate email + password + session ID
+1. Enter your candidate email, password, and session ID
 2. Click **Login & Start Interview**
-3. The AI greeter loads automatically — click 🎤 to speak (auto-submits after 3 seconds of silence)
+3. The AI greeting loads automatically — click 🎤 to speak (auto-submits after 3 seconds of silence)
 
 ---
 
 ## 🧠 System Design Decisions
 
-### Why Spring AI's `BeanOutputConverter` for reports?
-Rather than prompting the LLM with "return JSON" and manually parsing, `BeanOutputConverter<AiReportResult>` injects the Jackson schema into the prompt and provides a typed `convert()` method. This eliminates brittle string parsing and gives compile-time safety on the report structure. An extra strip of markdown fences handles models that add code blocks around JSON.
+### Why `BeanOutputConverter<AiReportResult>` instead of manual JSON parsing?
 
-### Why inject a transient time-warning into every chat turn?
-The session's `scheduledEnd` is known at request time, so the backend calculates `minutesRemaining` and injects a fresh `SystemMessage` on every turn. This avoids storing time-state in the LLM's context window, keeps the system prompt immutable, and ensures the AI always has an accurate countdown for its soft-closure logic.
+`BeanOutputConverter` injects the Jackson schema into the evaluation prompt using `converter.getFormat()`, so the LLM receives an exact structural contract rather than a vague "return JSON" instruction. The `convert()` method handles deserialisation with full type safety. A pre-processing step strips markdown code fences (```` ```json ```` blocks) that some models add, making the approach robust across different LLM providers on OpenRouter.
+
+### Why inject a transient time warning on every chat turn?
+
+`session.getScheduledEnd()` is available at request time, so `minutesRemaining` is computed fresh on every turn as `Duration.between(Instant.now(), scheduledEnd).toMinutes()`. This is injected as a new `SystemMessage` that is never persisted. The system prompt remains immutable and the AI always receives an accurate countdown — no stale cached state.
 
 ### Why idempotent report generation?
-Three different paths can trigger report creation: the candidate explicitly ending the session, the disconnect scheduler, and the grace-period scheduler. Making `generateCompletedReport()`, `generateNoShowReport()`, and `generateAbandonedSessionReport()` all check for an existing report before writing prevents duplicate records even under race conditions.
 
-### Why heartbeat tracking over WebSockets?
-Heartbeats (a periodic `POST /heartbeat` from the frontend) update `lastActiveAt` on the session. The scheduler compares this against `scheduledEnd + ABANDON_BUFFER_MINUTES` to detect abandoned sessions. This is simpler than maintaining a WebSocket connection and more resilient to network blips — the candidate's connection can drop and reconnect without losing session state.
+Three execution paths can reach the report creation logic: the candidate calling `POST /chat/end`, the grace-period scheduler expiring a no-show session, and the disconnect scheduler auto-closing an abandoned session. All three methods call `reportRepository.findBySessionId(id).isPresent()` before writing. Multiple invocations safely converge to one record.
 
-### Why a separate `SYSTEM` role in `conversation_messages`?
-Storing the system prompt as a first-class database record — rather than regenerating it on every request — means the chat history is a complete, auditable source of truth for any session. It also keeps `ChatServiceImpl` stateless: it rebuilds the full Spring AI message list from the DB on every turn, with no in-memory conversation held between requests.
+### Why heartbeat polling over WebSockets?
+
+WebSockets would introduce connection lifecycle management, reconnection logic, and stateful server infrastructure. A periodic `POST /heartbeat` requires none of this. It updates `lastActiveAt` on the session row; the scheduler checks whether `lastActiveAt` has gone stale relative to `scheduledEnd + ABANDON_BUFFER_MINUTES`. The candidate's connection can drop and reconnect without losing session state.
+
+### Why store all messages — including SYSTEM — in the database?
+
+Persisting the system prompt alongside `USER` and `ASSISTANT` messages means `ChatServiceImpl` is entirely stateless. It fetches the full message list from the database on every request, maps them to Spring AI types, and calls the LLM. Any server instance can handle any request without shared in-memory state. The `SYSTEM` role messages are filtered from the `/chat` history response so internal prompts are never exposed to clients.
+
+### Why `open-in-view: false` and `FetchType.LAZY` everywhere?
+
+`open-in-view: true` (the Spring Boot default) holds a database connection open for the full duration of the HTTP request, including view rendering. Setting it to `false` constrains JPA sessions to the service layer transaction boundary. Combined with `FetchType.LAZY` on all `@ManyToOne` and `@OneToOne` relations, this prevents unintended N+1 queries from crossing transaction boundaries.
 
 ---
 
@@ -427,71 +404,73 @@ Storing the system prompt as a first-class database record — rather than regen
 ```
 src/main/java/com/aiinterview/ai_interview/
 ├── config/
-│   ├── AiConfig.java              # Spring AI ChatClient bean with logging advisor
-│   └── InterviewConstants.java    # Centralized grace/abandon timing constants
+│   ├── AiConfig.java              # ChatClient bean; SimpleLoggerAdvisor for LLM call logging
+│   └── InterviewConstants.java    # Centralised grace/abandon timing constants (5 min each)
 ├── controller/
 │   ├── AuthController.java
 │   ├── ChatController.java
 │   ├── InterviewSessionController.java
-│   └── RecruiterController.java
-├── dto/                           # Immutable Java records for all request/response types
+│   └── RecruiterController.java   # @PreAuthorize("hasRole('RECRUITER')") class-level
+├── dto/                           # 17 immutable Java 21 records across all request/response types
 │   ├── auth/, chat/, report/, resume/, session/
 ├── entity/
-│   ├── User.java                  # Implements UserDetails
-│   ├── InterviewSession.java      # Core session entity with DB indexes on status+date
+│   ├── User.java                  # Implements UserDetails; single email unique constraint
+│   ├── InterviewSession.java      # Composite DB indexes on (status,scheduledStart/End)
 │   ├── ConversationMessage.java
 │   ├── Resume.java
-│   └── Report.java                # skillBreakdown + questionScores as @JdbcTypeCode JSON
+│   └── Report.java                # skillBreakdown + questionScores via @JdbcTypeCode(JSON)
 ├── enums/
 │   ├── SessionStatus.java         # SCHEDULED | IN_PROGRESS | COMPLETED | EXPIRED
 │   └── HiringRecommendation.java  # STRONG_YES | YES | MAYBE | NO
 ├── error/
-│   ├── GlobalExceptionHandler.java
+│   ├── GlobalExceptionHandler.java  # @RestControllerAdvice; handles 6 exception types
 │   ├── BadRequestException.java
 │   └── ResourceNotFoundException.java
-├── repository/                    # Spring Data JPA repositories with custom JPQL queries
+├── repository/                    # Spring Data JPA; custom JPQL for scheduler queries + 1-year check
 ├── scheduling/
-│   └── SessionCleanupScheduler.java  # Two @Scheduled jobs for lifecycle enforcement
+│   └── SessionCleanupScheduler.java  # Two @Scheduled jobs; staggered initialDelay
 ├── security/
-│   ├── AuthUtil.java              # JWT generation + verification + principal extraction
-│   ├── JwtAuthFilter.java         # OncePerRequestFilter with exception delegation
-│   ├── JwtUserPrincipal.java
-│   └── SecurityConfig.java        # Stateless, CORS-open, method security enabled
+│   ├── AuthUtil.java              # HMAC-SHA JWT generation + claim extraction
+│   ├── JwtAuthFilter.java         # OncePerRequestFilter; delegates exceptions to HandlerExceptionResolver
+│   ├── JwtUserPrincipal.java      # Java record; holds userId, email, authorities
+│   └── SecurityConfig.java        # Stateless, method security enabled, CORS configured
 └── service/
     ├── impl/
-    │   ├── AuthServiceImpl.java
-    │   ├── ChatServiceImpl.java       # Core LLM orchestration logic
-    │   ├── InterviewSessionServiceImpl.java
-    │   ├── ReportServiceImpl.java     # AI evaluation + idempotent report writes
-    │   ├── ResumeServiceImpl.java     # PDF upload + PDFBox text extraction
-    │   ├── TtsServiceImpl.java        # Kokoro RestClient integration
-    │   ├── EmailServiceImpl.java      # HTML email templates (invite + report-ready)
-    │   └── PdfReportService.java      # PDFBox multi-page report renderer
-    └── [interfaces for all above]
+    │   ├── AuthServiceImpl.java          # BCrypt + dual duplicate-email guard
+    │   ├── ChatServiceImpl.java          # LLM orchestration, message flush, TTS integration
+    │   ├── InterviewSessionServiceImpl.java  # Session gates, role checks, scheduler triggers
+    │   ├── ReportServiceImpl.java         # BeanOutputConverter, idempotent writes, email notify
+    │   ├── ResumeServiceImpl.java         # UUID naming, PDFTextStripper, session binding
+    │   ├── TtsServiceImpl.java            # RestClient → Kokoro → Base64
+    │   ├── EmailServiceImpl.java          # HTML templates with inline CSS; IST timezone formatting
+    │   └── PdfReportService.java          # PdfRenderer inner class with checkPageBreak()
+    └── [service interfaces for all above]
 ```
 
 ---
 
 ## 🔐 Security Notes
 
-- Passwords are hashed with **BCrypt** via Spring Security's `PasswordEncoder`
-- JWT tokens are signed with **HMAC-SHA** using a configurable secret (min 256-bit recommended)
-- Email is normalized to **lowercase** at signup and on all lookups to prevent duplicate accounts
-- Recruiters are prevented from interviewing themselves via an explicit email equality check at session creation
-- File uploads are saved with **UUID-prefixed filenames** to prevent path traversal and filename collisions
-- `SYSTEM` role messages are filtered out of the `/chat` history response — internal prompts are never exposed to the client
-- Spring Security's `@PreAuthorize("hasRole('RECRUITER')")` enforces role separation at the method level
+- Passwords hashed with **BCrypt** via Spring Security's `PasswordEncoder`
+- JWT tokens signed with **HMAC-SHA** using a configurable hex secret; `Keys.hmacShaKeyFor()` ensures minimum key length
+- Duplicate email at signup guarded by **both** a pre-check (`existsByEmail`) and a `catch(DataIntegrityViolationException)` to handle the race condition between check and insert
+- Email addresses normalised to **lowercase** at signup and on all session lookups to prevent account duplication via casing
+- Recruiters blocked from creating sessions for themselves via explicit email equality check
+- File uploads stored with **`UUID.randomUUID() + "_" + Paths.get(filename).getFileName()`** — prevents path traversal and filename collisions
+- `SYSTEM` role messages filtered from the `GET /chat` response — internal prompts never reach the client
+- `@PreAuthorize("hasRole('RECRUITER')")` on `RecruiterController` at class level; `role == CANDIDATE` check inside `startSession` service for defence-in-depth
+- **Note (dev config):** CORS is currently `allowedOriginPatterns("*")` and `/actuator/**` is publicly accessible — appropriate for local development, should be locked down before production deployment
 
 ---
 
 ## Future Enhancements
 
-- WebSocket-based live interviewer presence
-- Vector database for long resume retrieval
-- Multi-round interview workflows
-- Recruiter analytics dashboard
-- Real-time interview monitoring
-- Interview recording and playback
+- Docker Compose setup for one-command local dev (PostgreSQL + Kokoro + application)
+- WebSocket-based live session monitoring for recruiters
+- Vector database integration for semantic resume retrieval
+- Multi-round interview workflows (phone screen → technical → system design)
+- Recruiter analytics dashboard (score distributions, pass rates, time-to-hire)
+- CORS and Actuator hardening for production deployment
 
 ---
 
@@ -502,5 +481,5 @@ Pull requests are welcome. For significant changes, please open an issue first t
 ---
 
 <p align="center">
-  Built with Spring Boot · Spring AI · PostgreSQL · Kokoro TTS · Apache PDFBox
+  Built with Spring Boot 4 · Spring AI 2.0 · Java 21 · PostgreSQL · Apache PDFBox 3 · Kokoro TTS · JJWT 0.12.6
 </p>
